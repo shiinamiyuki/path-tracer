@@ -81,6 +81,11 @@ struct Vector3 {
     Vector3 rotate(const Vector3&vx, const Vector3&vy, const Vector3&vz)const{
         return vx * x + vy *y + vz * z;
     }
+    Vector3 rotate(const Vector3&norm){
+        auto z = Vector3::cross(norm,Vector3{1,0,0}).norm();
+        auto x = Vector3::cross(norm, z).norm();
+        return this->rotate(x,norm,z);
+    }
 };
 
 inline int toInt(double x) {
@@ -156,6 +161,7 @@ class Scene {
 public:
     Scene(int _w, int _h) : w(_w), h(_h) {
         screen.resize(w * h);
+        camDir = Vector3{0,0,1}.norm();
     }
     void setCamPos(const Vector3&v){
         camPos = v;
@@ -200,7 +206,6 @@ public:
         auto x = Vector3::cross(norm, z).norm();
         return v.rotate(x,norm,z);
     }
-
     Vector3 trace(const Ray &ray, int depth) {
         static const int maxDepth = 5;
         if (depth >= maxDepth)
@@ -244,7 +249,8 @@ public:
                         double y = (double) (j) / h * ymax * 2 - ymax;
                         x = x + xmax / w / 2 * ((double)sx / sppSqrt * 2 - 1);
                         y = y + ymax / h / 2 * ((double)sy / sppSqrt * 2 - 1);
-                        color += trace(Ray(camPos + Vector3{x, y, 1}, {x, y, 1}), 0);
+                        auto dir = Vector3{x, y, 1};//.rotate(camDir);
+                        color += trace(Ray(camPos + dir, dir), 0);
                     }
                 }
                 color *= (1.0 / spp);
@@ -317,8 +323,22 @@ void CornellBox() {
     scene.addObject(new Sphere({0, 10000, 0},
                                Material(EMIT,{0, 0, 0}, {12,12,12}),
                                10000 - 200));
-    scene.render(70*70);
+    scene.render(100);
+}
+void wiki(){
+    Scene scene(500,500);
+    scene.setCamPos({0,1.5,-3});
+    scene.addObject(new Sphere({0, 0, 1e5},
+                               Material(DIFF,{0.2,0.2,0.2}),
+                               1e5 - 20));
+    scene.addObject(new Sphere({-10000,0, 0},
+                               Material(EMIT,{0, 0, 0}, {1,1,1}),
+                               10000 - 200));
+    scene.addObject(new Sphere({0,-1e5,0},Material(DIFF,{0.5,0.5,0.5}),1e5)); //bottom
+    scene.addObject(new Sphere({-1,3,3},Material(DIFF,{1,1,1}),3));
+    scene.addObject(new Sphere({0.6,0.5,0},Material(DIFF,{1,0,0}),0.5));
+    scene.render(4900);
 }
 int main(){
-    CornellBox();
+  wiki();
 }
