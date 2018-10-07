@@ -152,11 +152,17 @@ class Scene {
     std::vector<RenderObject *> objects;
     unsigned int w, h;
     std::vector<Vector3> screen;
+    Vector3 camPos,camDir;
 public:
     Scene(int _w, int _h) : w(_w), h(_h) {
         screen.resize(w * h);
     }
-
+    void setCamPos(const Vector3&v){
+        camPos = v;
+    }
+    void setCamDir(const Vector3& v){
+        camDir = v;
+    }
     void addObject(RenderObject *object) {
         objects.emplace_back(object);
     }
@@ -229,15 +235,16 @@ public:
         double sppSqrt = (double) sqrt(spp);
 #pragma omp parallel for schedule(static, 1)
         for (int i = 0; i < w; i++) {
+            fmt::print("\r rendering ({0}x{0} spp), {1}%", sppSqrt,100 * (double)i/w);
             for (int j = 0; j < h; j++) {
                 Vector3 color;
                 for (int sx = 0; sx < sppSqrt; sx++) {
                     for (int sy = 0; sy < sppSqrt; sy++) {
                         double x = (double) (i) / w * xmax * 2 - xmax;
                         double y = (double) (j) / h * ymax * 2 - ymax;
-                        x = x + xmax / w / 2 * (sx / sppSqrt * 2 - 1);
-                        y = y + ymax / h / 2 * (sy / sppSqrt * 2 - 1);
-                        color += trace(Ray(Vector3{0, 0, -0.2} + Vector3{x, y, 1}, {x, y, 1}), 0);
+                        x = x + xmax / w / 2 * ((double)sx / sppSqrt * 2 - 1);
+                        y = y + ymax / h / 2 * ((double)sy / sppSqrt * 2 - 1);
+                        color += trace(Ray(camPos + Vector3{x, y, 1}, {x, y, 1}), 0);
                     }
                 }
                 color *= (1.0 / spp);
@@ -299,18 +306,18 @@ public:
 
 void CornellBox() {
     Scene scene(500, 500);
-  //  scene.addObject(new Sphere({-1e5,0,0},Material(DIFF,{1,0,0}),1e5-20)); //left
+    scene.addObject(new Sphere({-1e5,0,0},Material(DIFF,{1,0,0}),1e5-20)); //left
     scene.addObject(new Sphere({1e5,0,0},Material(DIFF,{0,1,0}),1e5-20)); //right
-  //  scene.addObject(new Sphere({0,-1e5,0},Material({0.5,0.5,0.5}),1e5-1)); //bottom
+    scene.addObject(new Sphere({0,-1e5,0},Material(DIFF,{0.5,0.5,0.5}),1e5-10)); //bottom
     scene.addObject(new Sphere({-3, -0.3, 10}, Material(REFL,{1, 1, 1}, {}), 3));
     scene.addObject(new Sphere({1, -0.5, 2}, Material(REFL,{1, 0, 0}, {0, 0, 0}), 0.4));
     scene.addObject(new Sphere({0, 0, 1e5},
                                Material(DIFF,{0.2,0.2,0.2}),
                                1e5 - 20));
     scene.addObject(new Sphere({0, 10000, 0},
-                               Material(EMIT,{0, 0, 0}, {1, 1, 1}),
+                               Material(EMIT,{0, 0, 0}, {12,12,12}),
                                10000 - 200));
-    scene.render(500);
+    scene.render(70*70);
 }
 int main(){
     CornellBox();
