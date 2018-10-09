@@ -22,7 +22,7 @@ class RenderObject {
 
 public:
     Material material;
-
+    Vector3 center;
     RenderObject() {}
 
     virtual Hit intersect(const Ray &ray) { return {nullptr, -1, {0, 0, 0}}; }

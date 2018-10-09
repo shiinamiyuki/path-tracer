@@ -7,9 +7,10 @@
 
 #include <cmath>
 #include <algorithm>
+#include <random>
 const double eps = 1e-2;
 
-bool equal(double x, double y) {
+inline bool equal(double x, double y) {
     return abs(x - y) < 1e-8;
 }
 inline int toInt(double x) {

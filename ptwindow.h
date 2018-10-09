@@ -37,6 +37,7 @@ public:
         scene.addObject(obj);
     }
     void show()override{
+        scene.findALightSource();
         while (!glfwWindowShouldClose(window)) {
             update();
             glClear(GL_COLOR_BUFFER_BIT);

@@ -10,7 +10,6 @@
 class Sphere : public RenderObject {
 public:
     double radius;
-    Vector3 center;
 
     Sphere(const Vector3 &c, const Material &m, double r) : RenderObject() {
         material = m;

@@ -24,7 +24,6 @@ public:
         }
         resize();
     }
-
     virtual void show() {
         while (!glfwWindowShouldClose(window)) {
             update();

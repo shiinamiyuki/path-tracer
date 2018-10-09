@@ -5,6 +5,7 @@
 #ifndef PATH_TRACER_VECTOR3_H
 #define PATH_TRACER_VECTOR3_H
 
+#include "util.h"
 struct Vector3 {
     double x, y, z;
 

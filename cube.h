@@ -11,8 +11,6 @@ class Cube : public RenderObject {
 public:
     double size;
     Vector3 min, max;
-    Vector3 center;
-
     Cube(const Vector3 &c, const Material &m, double s) : RenderObject() {
         material = m;
         min = c;
