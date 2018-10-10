@@ -22,44 +22,118 @@
 #include "util.h"
 #include "window.h"
 
-class PathTracerWindow : public Window{
+class PathTracerWindow : public Window {
+protected:
     Scene scene;
     int spp;
+    std::vector<unsigned char> pixels;
+    volatile bool alive;
+    std::string logOutput;
 public:
-    PathTracerWindow(int w, int h,int _spp):scene(w,h),Window(w,h,"Path Tracer"){
+    PathTracerWindow(int w, int h, int _spp) : scene(w, h), Window(w, h, "Path Tracer") {
         resize();
         spp = _spp;
+        alive = true;
     }
-    void setCamPos(Vector3 t){
+
+    void setCamPos(Vector3 t) {
         scene.setCamPos(t);
     }
-    void addObject(RenderObject * obj){
+
+    void addObject(RenderObject *obj) {
         scene.addObject(obj);
     }
-    void show()override{
+
+    void log(const std::string &s) {
+        logOutput.append(s);
+    }
+
+    void save();
+
+    void render() {
+        std::thread thread([&]() {
+            while (alive) {
+                scene.renderSamples(spp);
+                pixels = scene.pixelBuffer;
+            }
+        });
+        thread.detach();
+    }
+
+    static double sec() {
+        return (double) clock() / CLOCKS_PER_SEC;
+    }
+
+    void show() override {
+        auto start = sec();
         scene.findALightSource();
+        scene.prepare();
+        render();
         while (!glfwWindowShouldClose(window)) {
             update();
             glClear(GL_COLOR_BUFFER_BIT);
             paintGL();
             glfwSwapBuffers(window);
-
             glfwPollEvents();
+            auto t = sec() - start;
+            auto total = 1/scene.sampleCount * spp * t;
+            glfwSetWindowTitle(
+                    window,
+                    fmt::format("Path Tracer ({0}/{1} spp) Elapsed: {2}s, Remaining: {3}s",
+                                scene.sampleCount,
+                                spp,
+                                t,
+                                total - t).c_str()
+
+
+            );
+            Sleep(1000 / 30);
         }
         glfwTerminate();
+        alive = false;
+        Sleep(500);
+        save();
     }
-    void paintGL(){
-        /*glMatrixMode(GL_MODELVIEW);
-        glBegin(GL_QUADS);
-        glTexCoord2i(0, 0); glVertex2i(0,   0);
-        glTexCoord2i(0, 1); glVertex2i(0,   height);
-        glTexCoord2i(1, 1); glVertex2i(width, height);
-        glTexCoord2i(1, 0); glVertex2i(width, 0);
-        glEnd();*/
-        glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,scene.pixelBuffer.data());
+
+    void paintGL() {
+        glDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
     }
-    void update(){
-        scene.renderSamples(spp);
+
+    void update() {
+    }
+    Scene& getScene(){return scene;}
+};
+
+class DebugWindow {
+    Scene scene;
+    int spp;
+public:
+    DebugWindow(int w, int h, int _spp) : scene(w, h) {
+        spp = _spp;
+    }
+
+    void setCamPos(Vector3 t) {
+        scene.setCamPos(t);
+    }
+
+    void addObject(RenderObject *obj) {
+        scene.addObject(obj);
+    }
+
+    void show() {
+        scene.findALightSource();
+        scene.prepare();
+        while (true) {
+            scene.renderSamples(spp, 4);
+            Sleep(100);
+        }
+    }
+
+    void trace(int x, int y) {
+        scene.findALightSource();
+        scene.prepare();
+        unsigned short Xi[] = {0, 0, x * x * x};
+        scene.trace(x, y, sqrt(spp), Xi);
     }
 };
 

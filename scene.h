@@ -14,16 +14,22 @@
 #include "lib/rand48/erand48.h"
 #include "fmt/format.h"
 #include "lib/lodepng/lodepng.h"
+#include "kdtree.h"
 
+class PathTracerWindow;
 class Scene {
     std::vector<RenderObject *> objects;
+    std::vector<RenderObject*> lightSources;
+    KDTree * kdTree;
     unsigned int w, h;
     std::vector<Vector3> screen;
     Vector3 camPos, camDir;
     double sx, sy;
     double sampleCount;
     bool done;
+    KDTree* constructKDTree(const AABB& box,const std::vector<RenderObject*>&,unsigned int depth = 0);
 public:
+    friend class PathTracerWindow;
     std::vector<unsigned char> pixelBuffer;
 
     Scene(int _w, int _h) : w(_w), h(_h) {
@@ -32,6 +38,7 @@ public:
         sx = sy = 0;
         sampleCount = 0;
         done = false;
+        kdTree = nullptr;
     }
 
     void setCamPos(const Vector3 &v) {
@@ -45,7 +52,9 @@ public:
     void addObject(RenderObject *object) {
         objects.emplace_back(object);
     }
-
+    Hit find0(const Ray &ray){
+        return kdTree->search(ray);
+    }
     Hit find(const Ray &ray) {
         RenderObject *object = nullptr;
         double minDist = 99999;
@@ -55,13 +64,17 @@ public:
             double d = result.distance;
             if (d > eps && minDist > d) {
                 minDist = d;
-                object = i;
+                if(result.object){
+                    object = result.object;
+                }else
+                    object = i;
                 norm = result.normal;
             }
         }
         return {object, minDist, norm};
     }
-    RenderObject * findALightSource();
+    RenderObject *findALightSource();
+
     Vector3 randomVectorInHemisphere(const Vector3 &norm, unsigned short *Xi) {
 
         auto theta0 = erand48(Xi) * 2 * M_PI;
@@ -71,7 +84,7 @@ public:
         };
         //auto v = Vector3(erand48(Xi) * 2-1,erand48(Xi),erand48(Xi) * 2-1).norm();
 
-        auto z = Vector3::cross(norm, abs(norm.y)>0.1 ?Vector3{1, 0, 0}:Vector3(0,1,0)).norm();
+        auto z = Vector3::cross(norm, abs(norm.y) > 0.1 ? Vector3{1, 0, 0} : Vector3(0, 1, 0)).norm();
         auto x = Vector3::cross(norm, z).norm();
         v = v.rotate(x, norm, z);
         if (v * norm < 0) {
@@ -79,8 +92,8 @@ public:
         }
         return v;
     }
-
-
+    void trace(int i,int j, double spp,unsigned short * Xi);
+    void save();
 
 #if 0
     void render(int spp = 4) {
@@ -117,7 +130,9 @@ public:
     }
 
 #endif
+
     Vector3 trace(const Ray &ray, int depth, unsigned short *Xi);
+
     void renderSamples(int spp = 4, int samples = 1);
 
     void render(int spp, int s = 4) {
@@ -126,6 +141,10 @@ public:
         while (!done) {
             renderSamples(spp, s);
         }
+    }
+    void prepare();
+    void addLightSource(RenderObject*o){
+        lightSources.emplace_back(o);
     }
 };
 

@@ -8,6 +8,7 @@
 #include <cmath>
 #include <algorithm>
 #include <random>
+#include <thread>
 const double eps = 1e-2;
 
 inline bool equal(double x, double y) {
@@ -21,5 +22,10 @@ inline int toInt(double x) {
     x = x * 255;
     return (int) x;
 }
-
+inline void ptAssert(bool x){
+    if(!x)
+    {
+    //    throw std::exception();
+    }
+}
 #endif //PATH_TRACER_UTIL_H

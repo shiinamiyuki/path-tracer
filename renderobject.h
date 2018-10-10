@@ -7,17 +7,7 @@
 
 #include "ray.h"
 #include "material.h"
-class RenderObject;
-struct Hit {
-    RenderObject *object;
-    double distance;
-    Vector3 normal;
-
-    Hit() { object = nullptr; }
-
-    Hit(RenderObject *_o, double _d, const Vector3 &_n) :
-            object(_o), distance(_d), normal(_n) { normal.normalize(); }
-};
+#include "hit.h"
 class RenderObject {
 
 public:
@@ -26,7 +16,7 @@ public:
     RenderObject() {}
 
     virtual Hit intersect(const Ray &ray) { return {nullptr, -1, {0, 0, 0}}; }
-
+    virtual void prepare(){}
     virtual ~RenderObject() {}
 };
 

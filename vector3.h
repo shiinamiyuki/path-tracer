@@ -6,6 +6,7 @@
 #define PATH_TRACER_VECTOR3_H
 
 #include "util.h"
+#include <exception>
 struct Vector3 {
     double x, y, z;
 
@@ -90,6 +91,18 @@ struct Vector3 {
         auto z = Vector3::cross(norm, Vector3{1, 0, 0}).norm();
         auto x = Vector3::cross(norm, z).norm();
         return this->rotate(x, norm, z);
+    }
+    double get(unsigned int i)const{
+        switch (i) {
+            case 0:
+                return x;
+            case 1:
+                return y;
+            case 2:
+                return z;
+            default:
+                throw std::exception();
+        }
     }
 };
 #endif //PATH_TRACER_VECTOR3_H
